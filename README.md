@@ -1,6 +1,59 @@
 # H0 Zero Stack App
 
-![TypeScript](https://img.shields.io/badge/language-TypeScript-3178C6) ![Express](https://img.shields.io/badge/framework-Express-000000) ![GitHub API](https://img.shields.io/badge/API-GitHub%20REST-181717) ![Docker](https://img.shields.io/badge/Docker-ready-2496ED) ![License](https://img.shields.io/badge/license-MIT-green) ![H0](https://img.shields.io/badge/hackathon-H0%20Zero%20Stack-$80K%20prize-orange) ![Tests](https://img.shields.io/badge/tests-8%20passed-success)
+![TypeScript](https://img.shields.io/badge/language-TypeScript-3178C6) ![Express](https://img.shields.io/badge/framework-Express-000000) ![GitHub API](https://img.shields.io/badge/API-GitHub%20REST-181717) ![Docker](https://img.shields.io/badge/Docker-ready-2496ED) ![License](https://img.shields.io/badge/license-MIT-green) ![H0](https://img.shields.io/badge/hackathon-H0%20Zero%20Stack-$80K%20prize-orange) ![Tests](https://img.shields.io/badge/tests-35%20passed-success)
+
+## 📸 Screenshot
+
+![ZeroDeploy UI](docs/screenshot-ui.png)
+
+*ZeroDeploy analyzes any public GitHub repo across 4 quality dimensions.*
+
+## Live API Example
+
+Here's the actual response from analyzing a real, low-traffic repo —
+[`aggreyeric/qwenflow`](https://github.com/aggreyeric/qwenflow) — which scored **58/100**:
+
+```json
+{
+  "repo": "aggreyeric/qwenflow",
+  "overallScore": 58,
+  "scores": [
+    { "category": "Popularity", "score": 0, "maxScore": 25 },
+    { "category": "Activity", "score": 15, "maxScore": 25 },
+    { "category": "Code Quality", "score": 18, "maxScore": 25 },
+    { "category": "Security", "score": 25, "maxScore": 25 }
+  ]
+}
+```
+
+This is a great example because it shows how the rubric behaves on an indie / early-stage repo:
+strong on the things that matter for a solo project (security, code quality), zero on raw
+popularity. Here's what each dimension means and why it scored the way it did:
+
+- **Popularity (0/25)** — measures community adoption: stars, forks, and watchers. qwenflow has
+  none of these yet, so it earns 0. Scoring is **logarithmic** — 10k+ stars earns the full 15
+  points, but even a handful of stars (e.g. 5) gives partial credit. The log curve means a
+  project with 100 stars isn't 100× worse than one with 10k; it's just earlier on the same
+  growth curve. Until you have *any* stars/forks/watchers, you stay at 0 here.
+- **Activity (15/25)** — asks "is this repo alive?" It's a blend of **recency** (how recently
+  `updated_at` moved — full credit within 30 days, decaying after) and **cadence** (how much
+  momentum the repo shows between `created_at` and `updated_at`), plus a penalty for a swollen
+  open-issue queue. qwenflow gets most of its points from being recently touched, but loses
+  some for having little long-term commit cadence to measure yet.
+- **Code Quality (18/25)** — proxies engineering rigor via repo hygiene: presence of a LICENSE,
+  README, topics, a homepage/description, `.github/` config (issue templates, Actions), and
+  project/wiki enablement. qwenflow scores well here (18) because it ships a README and a
+  license — the basics are done — but misses points for missing `.github/` automation and
+  unfilled metadata fields.
+- **Security (25/25)** — maintenance & safety posture. It checks the **archived flag**
+  (-25 if archived, no penalty if active), rewards an **explicit license** (10 pts), rewards
+  a recent **`updated_at`** maintenance signal (10 pts), and checks the repo isn't
+  flagged/deprecated (5 pts). qwenflow hits every one of these — it's active, licensed,
+  recently maintained, and not deprecated — so it earns a perfect 25.
+
+**The takeaway:** ZeroDeploy's scorecard rewards *health* (security, hygiene, activity) just as
+much as *hype* (stars). A brand-new repo with a clean license and recent commits can already
+earn 50+/100 — and as the community grows, the popularity points fill in on that same log curve.
 
 ## Why ZeroDeploy?
 
