@@ -3,6 +3,9 @@
 ## Overview
 ZeroDeploy is an AI-powered GitHub repo quality scorer. Analyzes any public repo across 4 dimensions (Popularity, Activity, Code Quality, Security) using the GitHub REST API.
 
+- **GitHub:** https://github.com/aggreyeric/h0-zerostack
+- **Devpost submission:** "H0 Zero Stack" (ZeroDeploy)
+
 ## Tech Stack
 - TypeScript, ESNext modules
 - Express.js
@@ -42,3 +45,4 @@ tests/analyzer.test.ts (18 tests) + tests/score-logic.test.ts (17 tests)
 - parseRepoUrl (not parseGitHubUrl) is the exported function name
 - No API key needed — uses public GitHub API (rate limited to 60/hr)
 - analyzeRepo calls GitHub API — tests only test parseRepoUrl
+- **Devpost:** submitted as "H0 Zero Stack" (ZeroDeploy). Source: https://github.com/aggreyeric/h0-zerostack
