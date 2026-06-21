@@ -1,0 +1,24 @@
+{
+  "name": "h0-zerostack",
+  "version": "0.1.0",
+  "description": "ZeroDeploy — AI-powered GitHub repo code review tool. Frontend by Vercel v0, backend on AWS serverless databases.",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "test": "vitest run",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "@ai-sdk/openai": "^0.0.66",
+    "ai": "^4.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.4",
+    "vitest": "^2.0.5",
+    "tsx": "^4.19.0",
+    "@types/express": "^4.17.21",
+    "@types/node": "^22.5.0"
+  }
+}
