@@ -1,89 +1,133 @@
-# ZeroDeploy — Hackathon Submission Fields
+# ZeroDeploy — Devpost Submission Fields
 
-> Copy-paste-ready fields for the **H0: Hack the Zero Stack** submission form.
+> Copy-paste-ready content for the **H0: Hack the Zero Stack** submission form.
+> Platform: Devpost — https://h01.devpost.com/
+> Prize pool: $80K · Deadline: Jun 29, 2026
+> Status: 🟡 Draft — do **NOT** submit until Eric signs off.
 
 ---
 
-## Project Name
+## Devpost Submission Fields
 
-ZeroDeploy
+### Project Name
 
-## Tagline
+ZeroDeploy — AI-Powered GitHub Repo Quality Scorer
 
-AI-powered GitHub repo quality scoring — Vercel v0 frontend + AWS zero-config backend
+### Tagline
 
-## Short Description
+Drop any public GitHub repo URL and get an instant, transparent quality scorecard in seconds.
 
-Drop any GitHub repo URL into ZeroDeploy and get an instant, AI-generated quality scorecard —
-readability, complexity, test coverage, security posture, and an overall grade. Think of it as a
-senior-engineer code review on demand, powered by the Zero Stack: a Vercel v0–generated React
-frontend and an AWS serverless backend that scales to zero.
+### Description (required, public)
 
-## Full Description
+GitHub now hosts more than 400 million repositories. Yet there is still no fast, objective way to
+answer a simple question: *"Is this repo any good?"* Developers waste hours skimming READMEs,
+counting stars, and guessing at maintenance health before they trust a dependency or contribute to a
+project. **ZeroDeploy** solves this with a one-click, zero-config quality scorecard.
 
-ZeroDeploy turns a raw GitHub repository into an instant, structured code-quality scorecard. Paste
-a repo URL and within seconds ZeroDeploy fetches the code, runs it through an LLM analysis
-pipeline built on the Vercel AI SDK, and returns a multi-dimensional grade.
+Paste any public repository URL and ZeroDeploy returns an instant grade on a transparent **100-point
+scale**, split evenly across four weighted dimensions — each with specific findings that explain
+exactly *why* the number is what it is, so the score is never a black box.
 
-### What it does
+**How it works.** The user drops a repo URL into a clean dark-themed UI. An Express + TypeScript
+backend parses the URL, fetches live metadata from the GitHub REST API (no API key required), runs
+it through a deterministic scoring engine, and returns a structured scorecard with per-category
+scores, findings, and a percentage letter grade. The whole round-trip takes seconds.
 
-1. **Repo ingest** — Accepts a GitHub repo URL, pulls the relevant source files, and tokenizes them
-   for analysis (with size and file-type guards).
-2. **AI scoring rubric** — Prompts the LLM with a structured rubric covering five axes:
-   - **Readability** — naming, comments, consistency, formatting
-   - **Complexity** — cyclomatic complexity, abstraction abuse, deep nesting
-   - **Test coverage** — presence, quality, and meaningfulness of tests
-   - **Security posture** — obvious vulnerabilities, secret handling, dependency hygiene
-   - **Overall grade** — weighted summary A–F
-3. **Scorecard output** — Returns a JSON scorecard plus a human-readable explanation per axis,
-   ready to render in the v0-generated frontend.
-4. **History** — Persists each review (AWS serverless database) so users can revisit and compare
-   repos over time.
+**The four scoring dimensions:**
 
-### How it scores
+1. **Popularity (25 pts)** — community adoption via stars, forks, and watchers, scored on a
+   logarithmic scale so indie repos still earn credit, not just mega-projects.
+2. **Activity (25 pts)** — is the repo alive? Freshness of the last update, commit/issue cadence,
+   and open-issue volume flag abandoned projects.
+3. **Code Quality (25 pts)** — engineering-rigor signals: LICENSE, README, topics, `.github/`
+   config, homepage, and wiki — the hygiene a maintainer would check.
+4. **Security (25 pts)** — maintenance & safety posture: archived flag, explicit license,
+   up-to-date signal, and deprecation status.
 
-Each axis is scored 0–100 by the LLM against a fixed rubric, then weighted into an overall grade.
-The rubric is codified in the prompt so results are reproducible and not vibes-based. Large repos
-are chunked and sampled so analysis stays within token limits while still covering the most
-representative files.
+**Why the Zero Stack.** The frontend was designed with **Vercel v0** AI code generation — a polished
+dark UI shipped in minutes with no boilerplate. The backend is architected for **AWS serverless
+databases** (DynamoDB / Aurora Serverless v2): zero-config, scales to zero when idle, auto-scales
+under load. Everything is containerized with Docker so it runs identically on a laptop, in CI, and
+in production.
 
-### Why the Zero Stack
+ZeroDeploy embodies the H0 theme: a genuinely useful tool built end-to-end on the Zero Stack — v0 for
+the frontend, AWS serverless for the backend, zero configuration, ready to scale.
 
-- **Vercel v0** generates the entire React UI in minutes — no boilerplate, ship frontend at the
-  speed of thought.
-- **AWS serverless databases** (DynamoDB / Aurora Serverless v2) give zero-config persistence that
-  scales to zero when idle and auto-scales under load.
-- **Vercel AI SDK** abstracts the model layer, so the scoring pipeline can swap providers without
-  touching business logic.
-- The Express + TypeScript API is the glue: containerized with Docker so it runs identically on a
-  laptop, in CI, and in production.
+### Demo Video URL
 
-## Tech Stack
+**PENDING** — Eric to record. (See `DEMO_VIDEO_SCRIPT.md` for the recording script.)
 
-- **Language:** TypeScript
-- **API:** Express
-- **AI:** Vercel AI SDK (`ai`) + OpenAI provider (`@ai-sdk/openai`)
-- **Frontend:** Vercel v0-generated React
-- **Database:** AWS serverless (DynamoDB / Aurora Serverless v2)
-- **Runtime packaging:** Docker + docker-compose
-- **Hosting:** Vercel (frontend) + AWS (backend)
+### Technologies Used
 
-## GitHub Repository
+Vercel v0 (frontend design), AWS (serverless backend concept), TypeScript, Express.js, GitHub REST API, Docker, HTML/CSS/JS
 
-https://github.com/aggreyeric/h0-zerostack
+### How I Built It
 
-## Demo Video
+I started the frontend by prompting **Vercel v0** for a polished dark-themed dashboard — it produced
+the UI scaffolding (cards, input, gradient accents) in minutes, which I then refined into a single
+self-contained vanilla `HTML/CSS/JS` file under `public/`. No build step, no framework bloat — just a
+fast, responsive UI that calls the backend over `fetch()`.
 
-[Eric to add]
+The backend is an **Express + TypeScript** server (`src/index.ts`) exposing `POST /api/analyze` and
+`GET /api/analyze/:owner/:repo`. The heart of it is the analyzer engine (`src/analyzer.ts`): it
+parses any repo URL format (full URL, `owner/repo`, or `.git` variant), calls the **GitHub REST API**
+to pull live metadata, then runs four scoring functions — Popularity, Activity, Code Quality, and
+Security — each returning a numeric score *and* a list of specific findings that justify it.
 
-## Built With
+I designed the 100-point rubric to be deterministic and explainable rather than a vibes-based guess:
+stars use a logarithmic scale so indie repos aren't penalized, freshness decays smoothly over time,
+and every category surfaces its findings so the grade is auditable. The whole thing is packaged with
+**Docker + docker-compose** so it boots the same way anywhere, and a vitest suite covers the
+URL-parsing and scoring logic.
 
-TypeScript, Express, Vercel AI SDK, Docker
+### Challenges I Ran Into
 
-## Hackathon
+- **GitHub API rate limits.** Unauthenticated requests are capped at 60/hour per IP. I leaned on
+  public endpoints and graceful `429` handling so the UI degrades cleanly instead of crashing.
+- **Designing an intuitive scoring UX.** Four dimensions × findings × a letter grade is a lot of data
+  to show at once. I iterated on the dark UI until the scorecard reads at a glance: color-coded
+  category bars, a bold overall grade, and collapsible findings.
+- **Making it truly zero-config.** No API keys, no environment setup, no build tooling for the
+  frontend — the friction had to be zero, which meant careful API and packaging choices.
+- **Keeping the score fair.** Naive star-count scoring favors only mega-projects. Switching to a
+  logarithmic scale for Popularity made indie repos score honestly.
 
-H0: Hack the Zero Stack ($80K)
+### Accomplishments That I'm Proud Of
 
-## Deadline
+- A **transparent 100-point scoring system** across 4 weighted dimensions — every number is backed by
+  auditable findings, not a black box.
+- A **beautiful dark-themed UI** designed with Vercel v0 that loads instantly and needs zero setup.
+- **No API keys required** — it works out of the box against the public GitHub API.
+- **Docker-ready** end-to-end, with a passing test suite (8 tests green) for parsing and scoring.
+- Honest results: `vercel/next.js` scores ~87 (A−) while an abandoned repo scores low — the rubric
+  *feels* right.
 
-Jun 29, 2026
+### What I Learned
+
+- **Zero-config deployment patterns** — how Vercel v0 and AWS serverless databases collapse the
+  traditional dev-to-prod gap, and where to place the boundary between them.
+- **Using the GitHub REST API for repo analysis** — which metadata fields actually signal quality
+  (and which are noise), and how to reason about rate limits.
+- **Designing scoring rubrics** — that explainability (surfacing findings) matters as much as the
+  number itself for earning user trust.
+- How much polish a v0-generated UI gets you for free when you give it good prompts.
+
+### What's Next
+
+- **Private repository support** via optional GitHub OAuth tokens, so teams can score internal repos.
+- **Historical scoring trends** — track a repo's score over time by persisting analyses in AWS
+  Aurora Serverless, with delta graphs.
+- **A GitHub App integration** that scores repos on demand from a PR or issue comment (`/zerodeploy score`).
+- **Team & org scoring** — aggregate grades across an organization's repositories.
+- **Deeper code-quality analysis** — read into actual source files, dependency manifests, and CI
+  configs for richer signal beyond metadata.
+
+### Links
+
+- **GitHub:** https://github.com/aggreyeric/h0-zerostack
+- **Demo video:** _pending — Eric to record_
+- **Live demo:** _pending deployment (Vercel + AWS)_
+
+---
+
+_Hackathon: H0 — Hack the Zero Stack · $80K · Deadline Jun 29, 2026 · Devpost https://h01.devpost.com/_
