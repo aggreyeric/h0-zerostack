@@ -1,6 +1,16 @@
 # H0 Zero Stack App
 
-**ZeroDeploy** — Give any GitHub repo a URL, get an instant AI quality score.
+![TypeScript](https://img.shields.io/badge/language-TypeScript-3178C6) ![Express](https://img.shields.io/badge/framework-Express-000000) ![GitHub API](https://img.shields.io/badge/API-GitHub%20REST-181717) ![Docker](https://img.shields.io/badge/Docker-ready-2496ED) ![License](https://img.shields.io/badge/license-MIT-green) ![H0](https://img.shields.io/badge/hackathon-H0%20Zero%20Stack-$80K%20prize-orange) ![Tests](https://img.shields.io/badge/tests-8%20passed-success)
+
+## Why ZeroDeploy?
+
+- GitHub has 400M+ repos — finding good ones is hard
+- ZeroDeploy scores any public repo in seconds using 4 quality dimensions
+- Zero-config architecture: Vercel v0 for frontend, AWS serverless for backend
+- No API keys needed — uses GitHub's public API
+- Beautiful dark-theme UI + REST API for programmatic access
+
+**ZeroDeploy** is an AI-powered GitHub repository quality scorer. Enter any public repo URL and get an instant scorecard across 4 dimensions: Popularity, Activity, Code Quality, and Security — with specific findings and a percentage grade.
 
 Front-end in minutes (Vercel v0) · Back-end designed for scale (AWS serverless) · Zero config.
 
@@ -11,6 +21,39 @@ Front-end in minutes (Vercel v0) · Back-end designed for scale (AWS serverless)
 Drop a GitHub repo URL → ZeroDeploy pulls the code, runs an AI analysis pass, and returns a
 quality scorecard: readability, complexity, test coverage, security posture, and overall grade.
 Think of it as an instant senior-engineer code review, on demand.
+
+## How It Scores
+
+ZeroDeploy scores every repo on a **100-point scale**, split evenly across four weighted categories.
+Each category returns a numeric score **and a list of specific findings** that justify it — so the
+grade is never a black box.
+
+| Category | Max | What it measures | Scoring logic |
+| -------- | --- | ---------------- | ------------- |
+| **Popularity** | 25 | Community adoption & reach | **Stars** (log scale, up to 15 pts: 10k+ = full), **forks** (up to 5 pts: 1k+ = full), **watchers** (up to 5 pts: 1k+ = full). Logarithmic so indie repos still earn credit. |
+| **Activity** | 25 | Is the repo alive? | **Last update freshness** (10 pts, sliding scale — ≤30 days = full, decays over time), **commit/issue cadence** derived from `updated_at` vs `created_at` (10 pts), **open issues** volume & ratio (5 pts, penalizes abandoned bug queues). |
+| **Code Quality** | 25 | Signal of engineering rigor | Checks for **LICENSE** file (5 pts), **README** & **topics** present (5 pts), **homepage/description** filled in (3 pts), **`.github/`** config like issue templates / actions (7 pts), and **project/wiki** enabled (5 pts). Looks at repo hygiene the way a maintainer would. |
+| **Security** | 25 | Maintenance & safety posture | **Archived flag** (no penalty if active, -25 if archived), **explicit license** presence (10 pts), **up-to-date** maintenance signal from `updated_at` (10 pts), and **not flagged/described as deprecated** (5 pts). |
+
+The **overall score** is the sum of all four categories, also reported as a percentage grade
+(e.g. `82/100` → `B+`). Every category's `findings[]` array is surfaced in the scorecard so
+users see exactly *why* they got the number they got.
+
+## Architecture
+
+```
+┌─────────┐     ┌──────────────────┐     ┌──────────────────────┐     ┌────────────────┐     ┌──────────────┐
+│  User   │ ──▶ │ Dark UI (public/)│ ──▶ │ Express API          │ ──▶ │ Analyzer Engine│ ──▶ │ GitHub REST  │
+│         │     │ React + v0       │     │ (src/index.ts)       │     │ (src/analyzer.ts)│    │ API          │
+└─────────┘     └──────────────────┘     └──────────────────────┘     └────────────────┘     └──────────────┘
+                       POST /api/analyze            orchestrates                 scores 4 dims
+                       { url }                                                   returns scorecard
+```
+
+**Flow:** the user pastes a repo URL into the dark Vercel v0 UI. The Express API receives the
+request, hands the URL to the analyzer engine, which parses it (`parseRepoUrl`), pulls metadata
+from the GitHub REST API (`fetchRepoData`), runs the four scoring functions, and returns a
+structured `AnalysisResult` (overall score, per-category scores, findings, summary).
 
 ## The Zero Stack
 
@@ -41,6 +84,58 @@ npm run build && npm start   # production
 
 - `GET /health` — service health check
 - _(more coming: `POST /review`, `GET /review/:id`)_
+
+## API Documentation
+
+All endpoints return JSON. Base URL defaults to `http://localhost:3001` in dev.
+
+### `POST /api/analyze`
+
+Analyze a repo by URL. Accepts full URLs, shorthand (`owner/repo`), and `.git`-suffixed variants.
+
+**Request body**
+
+```json
+{ "url": "https://github.com/vercel/next.js" }
+```
+
+**Response `200`** — full scorecard:
+
+```json
+{
+  "repo": "vercel/next.js",
+  "url": "https://github.com/vercel/next.js",
+  "overallScore": 87,
+  "scores": [
+    { "category": "Popularity", "score": 24, "maxScore": 25, "findings": ["10000+ stars", "..."] },
+    { "category": "Activity",   "score": 21, "maxScore": 25, "findings": ["..."] },
+    { "category": "Code Quality","score": 22, "maxScore": 25, "findings": ["..."] },
+    { "category": "Security",   "score": 20, "maxScore": 25, "findings": ["..."] }
+  ],
+  "analyzedAt": "2026-06-21T12:00:00.000Z",
+  "summary": "..."
+}
+```
+
+**Errors:** `400` invalid URL · `404` repo not found / private · `429` GitHub rate limit.
+
+### `GET /api/analyze/:owner/:repo`
+
+Convenience GET form of the analyzer for direct linking / browser testing.
+
+```bash
+curl http://localhost:3001/api/analyze/vercel/next.js
+```
+
+Returns the same `AnalysisResult` shape as `POST /api/analyze`.
+
+### `GET /health`
+
+Liveness probe.
+
+```json
+{ "status": "ok", "timestamp": "2026-06-21T12:00:00.000Z" }
+```
 
 ## Project structure
 
