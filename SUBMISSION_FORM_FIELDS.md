@@ -98,7 +98,7 @@ URL-parsing and scoring logic.
   auditable findings, not a black box.
 - A **beautiful dark-themed UI** designed with Vercel v0 that loads instantly and needs zero setup.
 - **No API keys required** — it works out of the box against the public GitHub API.
-- **Docker-ready** end-to-end, with a passing test suite (8 tests green) for parsing and scoring.
+- **Docker-ready** end-to-end, with a passing test suite (35 tests green) covering URL parsing and scoring.
 - Honest results: `vercel/next.js` scores ~87 (A−) while an abandoned repo scores low — the rubric
   *feels* right.
 
