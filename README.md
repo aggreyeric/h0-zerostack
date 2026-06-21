@@ -263,4 +263,8 @@ h0-zerostack/
 
 ## Status
 
-🚧 **Scaffold** — project bootstrapped, building features.
+✅ **Code Complete** — 35 passing tests, dark-theme UI, Docker-ready, real GitHub API scoring.
+
+## 🤖 AI Assistants
+
+→ See [CLAUDE.md](./CLAUDE.md) for AI coding assistant context.
