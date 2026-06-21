@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { analyzeRepo, parseGitHubUrl } from "../analyzer.js";
+import { analyzeRepo, parseRepoUrl } from "../analyzer.js";
 
 const router = Router();
 
@@ -41,7 +41,7 @@ router.post("/parse", (req, res) => {
   if (!url) {
     return res.status(400).json({ error: "Missing required field: url" });
   }
-  const parsed = parseGitHubUrl(url);
+  const parsed = parseRepoUrl(url);
   if (!parsed) {
     return res.status(400).json({ error: "Invalid GitHub URL format", example: "https://github.com/owner/repo" });
   }
