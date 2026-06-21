@@ -1,7 +1,7 @@
 {
   "name": "h0-zerostack",
   "version": "0.1.0",
-  "description": "ZeroDeploy — AI-powered GitHub repo code review tool. Frontend by Vercel v0, backend on AWS serverless databases.",
+  "description": "ZeroDeploy — AI-powered GitHub repo quality scorer — analyze any repo's popularity, activity, code quality, and security in seconds. Frontend by Vercel v0, backend on AWS serverless databases.",
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",

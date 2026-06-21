@@ -1,12 +1,22 @@
 # Changelog
 
-## [0.1.0] — 2026-06-21
+All notable changes to ZeroDeploy will be documented in this file.
+
+## [0.1.0] - 2026-06-21
 
 ### Added
-- Core analyzer engine: 4-dimension scoring (Popularity, Activity, Code Quality, Security) — 100-point total
-- GitHub API integration — scores any public repo in seconds
-- REST API: POST /api/analyze, GET /api/analyze/:owner/:repo, POST /api/parse
-- Dark-theme single-page UI with circular score gauge
-- Docker multi-stage build + docker-compose
-- URL parser supporting multiple GitHub URL formats
-- Demo script and video script
+- chore: scaffold H0 ZeroDeploy project (express + ts + ai sdk)
+- feat: dark UI (667 lines), Docker, submission form, GitHub maturity files, static serving
+- feat: core analyzer engine + API routes + server wiring
+- test: URL parser tests (8 cases)
+- docs: demo script, demo video script, README badges+Why section
+- chore: CI workflow, changelog, updated submission fields
+- Dark-theme vanilla HTML/CSS/JS UI (667 lines)
+- Core analyzer engine: 4-dimension scoring (Popularity, Activity, Code Quality, Security)
+- GitHub REST API integration (public, no auth needed)
+- Express API routes: POST /api/analyze, GET /api/analyze/:owner/:repo, POST /api/parse
+- Docker + docker-compose configuration
+- 8+ passing tests
+- GitHub maturity files (CONTRIBUTING, SECURITY, CODE_OF_CONDUCT, LICENSE, CI workflow, etc.)
+- Demo script and demo video script
+- Devpost submission form fields
