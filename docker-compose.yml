@@ -1,0 +1,15 @@
+# ZeroDeploy (h0-zerostack) — standalone orchestration.
+#
+#   docker compose up --build        # build + run the API on http://localhost:3001
+#
+services:
+  zerostack:
+    build: .
+    image: h0-zerostack:latest
+    container_name: zerostack-api
+    ports:
+      - "3001:3001"
+    environment:
+      NODE_ENV: production
+      PORT: "3001"
+    restart: unless-stopped

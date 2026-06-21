@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ZeroDeploy — AI-Powered GitHub Repo Quality Scorer</title>
+  <style>
+    :root {
+      --bg: #0a0a1a;
+      --accent: #00d9ff;
+      --surface: #12122a;
+      --card: #1a1a3e;
+      --text: #e6e6f5;
+      --text-dim: #8a8ab5;
+      --good: #2ee6a8;
+      --warn: #ffc24a;
+      --bad: #ff5c7a;
+      --border: rgba(0, 217, 255, 0.18);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body { height: 100%; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.5;
+      background-image:
+        radial-gradient(900px 500px at 15% -10%, rgba(0, 217, 255, 0.10), transparent 60%),
+        radial-gradient(800px 500px at 100% 0%, rgba(120, 80, 255, 0.10), transparent 55%);
+      background-attachment: fixed;
+    }
+
+    .wrap {
+      max-width: 880px;
+      margin: 0 auto;
+      padding: 48px 24px 80px;
+    }
+
+    /* ---------- Header ---------- */
+    header { text-align: center; margin-bottom: 40px; }
+
+    header h1 {
+      font-size: 2.4rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    header h1 .logo { filter: drop-shadow(0 0 12px rgba(0, 217, 255, 0.45)); }
+
+    header p {
+      color: var(--text-dim);
+      margin-top: 8px;
+      font-size: 1.05rem;
+    }
+
+    /* ---------- Cards / surfaces ---------- */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px;
+    }
+
+    /* ---------- Input section ---------- */
+    .input-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 28px;
+      box-shadow: 0 18px 50px -28px rgba(0, 217, 255, 0.5);
+    }
+
+    .input-row {
+      display: flex;
+      gap: 12px;
+    }
+
+    #url-input {
+      flex: 1;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px 18px;
+      color: var(--text);
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    #url-input::placeholder { color: var(--text-dim); }
+
+    #url-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(0, 217, 255, 0.15);
+    }
+
+    button {
+      cursor: pointer;
+      border: none;
+      font-family: inherit;
+      font-weight: 700;
+      transition: transform 0.08s ease, box-shadow 0.2s, background 0.2s;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), #4a8cff);
+      color: #04121a;
+      border-radius: 12px;
+      padding: 16px 28px;
+      font-size: 1rem;
+      white-space: nowrap;
+      box-shadow: 0 10px 28px -10px rgba(0, 217, 255, 0.7);
+    }
+
+    .btn-primary:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 14px 32px -10px rgba(0, 217, 255, 0.85); }
+    .btn-primary:active:not(:disabled) { transform: translateY(0); }
+    .btn-primary:disabled { opacity: 0.55; cursor: not-allowed; }
+
+    .btn-ghost {
+      background: var(--card);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 22px;
+      font-size: 0.95rem;
+    }
+    .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+
+    .input-hint {
+      margin-top: 12px;
+      font-size: 0.85rem;
+      color: var(--text-dim);
+    }
+
+    .input-hint a { color: var(--accent); text-decoration: none; }
+    .input-hint a:hover { text-decoration: underline; }
+
+    /* ---------- Error ---------- */
+    .error-box {
+      margin-top: 16px;
+      background: rgba(255, 92, 122, 0.10);
+      border: 1px solid rgba(255, 92, 122, 0.4);
+      color: var(--bad);
+      border-radius: 12px;
+      padding: 12px 16px;
+      font-size: 0.92rem;
+      display: none;
+    }
+    .error-box.visible { display: block; }
+
+    /* ---------- Results ---------- */
+    #results { display: none; margin-top: 28px; }
+    #results.visible { display: block; }
+
+    .gauge-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 12px 0 28px;
+    }
+
+    .gauge {
+      position: relative;
+      width: 220px;
+      height: 220px;
+    }
+
+    .gauge svg { transform: rotate(-90deg); display: block; }
+
+    .gauge .track {
+      fill: none;
+      stroke: var(--card);
+      stroke-width: 14;
+    }
+
+    .gauge .progress {
+      fill: none;
+      stroke: var(--accent);
+      stroke-width: 14;
+      stroke-linecap: round;
+      stroke-dasharray: 534.07;
+      stroke-dashoffset: 534.07;
+      transition: stroke-dashoffset 1.1s cubic-bezier(0.22, 1, 0.36, 1), stroke 0.4s;
+      filter: drop-shadow(0 0 10px rgba(0, 217, 255, 0.55));
+    }
+
+    .gauge-center {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .gauge-score {
+      font-size: 3.1rem;
+      font-weight: 800;
+      line-height: 1;
+      transition: color 0.4s;
+    }
+
+    .gauge-label {
+      margin-top: 4px;
+      font-size: 0.8rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+    }
+
+    .repo-name {
+      text-align: center;
+      margin-top: 14px;
+      font-size: 1.05rem;
+      color: var(--text-dim);
+      word-break: break-all;
+    }
+
+    /* ---------- Breakdown ---------- */
+    .section-title {
+      font-size: 0.8rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      margin: 8px 0 14px;
+    }
+
+    .breakdown {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 16px;
+    }
+
+    .metric-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px;
+    }
+
+    .metric-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 12px;
+    }
+
+    .metric-name { font-weight: 600; font-size: 0.98rem; }
+    .metric-value { font-weight: 700; color: var(--accent); font-size: 0.95rem; }
+
+    .metric-bar {
+      height: 8px;
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .metric-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--accent), #4a8cff);
+      transition: width 1s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    /* ---------- Summary ---------- */
+    .summary {
+      margin-top: 26px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: 14px;
+      padding: 20px 22px;
+      font-size: 1rem;
+      line-height: 1.65;
+    }
+
+    /* ---------- Actions ---------- */
+    .actions {
+      margin-top: 26px;
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    /* ---------- Spinner ---------- */
+    .spinner {
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+      border: 2.5px solid rgba(4, 18, 26, 0.35);
+      border-top-color: #04121a;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      vertical-align: -3px;
+      margin-right: 8px;
+    }
+
+    .loading-overlay {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 18px;
+      padding: 60px 0;
+    }
+    .loading-overlay.visible { display: flex; }
+
+    .loading-overlay .big-spin {
+      width: 44px;
+      height: 44px;
+      border: 4px solid var(--card);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    .loading-overlay p { color: var(--text-dim); font-size: 0.95rem; }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    footer {
+      text-align: center;
+      margin-top: 48px;
+      color: var(--text-dim);
+      font-size: 0.82rem;
+    }
+
+    @media (max-width: 560px) {
+      .input-row { flex-direction: column; }
+      header h1 { font-size: 1.9rem; }
+      .gauge { width: 180px; height: 180px; }
+      .gauge-score { font-size: 2.5rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1><span class="logo">🔍</span> ZeroDeploy</h1>
+      <p>AI-Powered GitHub Repo Quality Scorer</p>
+    </header>
+
+    <!-- Input -->
+    <section class="input-section">
+      <form id="analyze-form" class="input-row">
+        <input
+          id="url-input"
+          type="text"
+          inputmode="url"
+          autocomplete="off"
+          placeholder="https://github.com/owner/repo"
+          aria-label="GitHub repository URL"
+        />
+        <button id="analyze-btn" class="btn-primary" type="submit">Analyze</button>
+      </form>
+      <p class="input-hint">
+        Paste a public GitHub URL — e.g.
+        <a href="#" data-example="https://github.com/facebook/react">facebook/react</a>
+      </p>
+      <div id="error-box" class="error-box" role="alert"></div>
+    </section>
+
+    <!-- Loading -->
+    <div id="loading-overlay" class="loading-overlay">
+      <div class="big-spin"></div>
+      <p id="loading-text">Analyzing repository…</p>
+    </div>
+
+    <!-- Results -->
+    <section id="results">
+      <div class="card">
+        <div class="gauge-wrap">
+          <div class="gauge">
+            <svg width="220" height="220" viewBox="0 0 200 200">
+              <circle class="track" cx="100" cy="100" r="85"></circle>
+              <circle class="progress" id="gauge-progress" cx="100" cy="100" r="85"></circle>
+            </svg>
+            <div class="gauge-center">
+              <span class="gauge-score" id="gauge-score">0</span>
+              <span class="gauge-label" id="gauge-grade">out of 100</span>
+            </div>
+          </div>
+          <div class="repo-name" id="repo-name"></div>
+        </div>
+
+        <div class="section-title">Score Breakdown</div>
+        <div class="breakdown" id="breakdown"></div>
+
+        <div class="summary" id="summary"></div>
+
+        <div class="actions">
+          <button id="again-btn" class="btn-ghost" type="button">Analyze Another</button>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      ZeroDeploy — zero config, zero deploy. Built for H0 Hackathon.
+    </footer>
+  </div>
+
+  <script>
+    const GAUGE_CIRC = 2 * Math.PI * 85; // ≈ 534.07
+    const DEFAULT_METRICS = ["Popularity", "Activity", "Code Quality", "Security"];
+
+    const $ = (id) => document.getElementById(id);
+    const form = $("analyze-form");
+    const urlInput = $("url-input");
+    const analyzeBtn = $("analyze-btn");
+    const errorBox = $("error-box");
+    const loadingOverlay = $("loading-overlay");
+    const loadingText = $("loading-text");
+    const results = $("results");
+
+    function showError(msg) {
+      errorBox.textContent = msg;
+      errorBox.classList.add("visible");
+    }
+    function clearError() {
+      errorBox.classList.remove("visible");
+      errorBox.textContent = "";
+    }
+
+    function isValidGitHubUrl(url) {
+      const trimmed = url.trim();
+      if (!trimmed) return false;
+      // accept with or without protocol
+      const normalized = /^https?:\/\//i.test(trimmed) ? trimmed : "https://" + trimmed;
+      try {
+        const u = new URL(normalized);
+        return /(^|\.)github\.com$/i.test(u.hostname) && u.pathname.split("/").filter(Boolean).length >= 2;
+      } catch {
+        return false;
+      }
+    }
+
+    function setLoading(on, text) {
+      loadingOverlay.classList.toggle("visible", on);
+      if (text) loadingText.textContent = text;
+      analyzeBtn.disabled = on;
+      urlInput.disabled = on;
+    }
+
+    function gradeColor(score) {
+      if (score >= 80) return "var(--good)";
+      if (score >= 50) return "var(--warn)";
+      return "var(--bad)";
+    }
+
+    function gradeLabel(score) {
+      if (score >= 90) return "Excellent";
+      if (score >= 75) return "Great";
+      if (score >= 50) return "Fair";
+      if (score >= 25) return "Poor";
+      return "Critical";
+    }
+
+    function animateNumber(el, target, duration = 1000) {
+      const start = performance.now();
+      function tick(now) {
+        const t = Math.min(1, (now - start) / duration);
+        const eased = 1 - Math.pow(1 - t, 3); // easeOutCubic
+        el.textContent = Math.round(eased * target);
+        if (t < 1) requestAnimationFrame(tick);
+        else el.textContent = Math.round(target);
+      }
+      requestAnimationFrame(tick);
+    }
+
+    function renderGauge(score) {
+      const clamped = Math.max(0, Math.min(100, score));
+      const offset = GAUGE_CIRC * (1 - clamped / 100);
+      const progress = $("gauge-progress");
+      progress.style.strokeDashoffset = offset;
+      const color = gradeColor(clamped);
+      progress.style.stroke = color;
+      const scoreEl = $("gauge-score");
+      scoreEl.style.color = color;
+      animateNumber(scoreEl, clamped);
+      $("gauge-grade").textContent = gradeLabel(clamped);
+    }
+
+    function renderBreakdown(metrics) {
+      const wrap = $("breakdown");
+      wrap.innerHTML = "";
+      metrics.forEach((m, i) => {
+        const max = m.maxScore || 100;
+        const pct = Math.max(0, Math.min(100, (m.score / max) * 100));
+        const card = document.createElement("div");
+        card.className = "metric-card";
+        card.innerHTML = `
+          <div class="metric-head">
+            <span class="metric-name">${escapeHtml(m.name)}</span>
+            <span class="metric-value">${fmt(m.score)} / ${fmt(max)}</span>
+          </div>
+          <div class="metric-bar"><div class="metric-fill"></div></div>
+        `;
+        wrap.appendChild(card);
+        // animate width after paint
+        requestAnimationFrame(() => {
+          setTimeout(() => {
+            card.querySelector(".metric-fill").style.width = pct + "%";
+          }, 80 + i * 90);
+        });
+      });
+    }
+
+    function fmt(n) {
+      const num = Number(n);
+      return Number.isInteger(num) ? String(num) : num.toFixed(1);
+    }
+
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, (c) => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+      }[c]));
+    }
+
+    function normalizeMetrics(data) {
+      // Accept a few reasonable shapes from the API.
+      let score = data.score ?? data.totalScore ?? data.overall ?? null;
+      let metrics = data.breakdown || data.metrics || data.categories || null;
+      let summary = data.summary || data.description || data.reason || "";
+      const repoName = data.repo || data.repository || data.name || "";
+
+      // If no breakdown given, synthesize from a default split so the UI still works.
+      if (!metrics && score != null) {
+        const each = Math.round(score / 4);
+        metrics = DEFAULT_METRICS.map((name, idx) => ({
+          name,
+          score: idx === DEFAULT_METRICS.length - 1 ? score - each * 3 : each,
+          maxScore: 25,
+        }));
+      }
+      // Normalize each entry to {name, score, maxScore}.
+      if (metrics && !Array.isArray(metrics) && typeof metrics === "object") {
+        metrics = Object.entries(metrics).map(([k, v]) => ({
+          name: k,
+          score: typeof v === "number" ? v : (v?.score ?? v?.value ?? 0),
+          maxScore: (typeof v === "number" ? undefined : v?.maxScore) ?? 25,
+        }));
+      }
+      metrics = (metrics || []).map((m) => {
+        if (typeof m === "number") return { name: "Score", score: m, maxScore: 100 };
+        return {
+          name: m.name || m.label || m.category || "Score",
+          score: m.score ?? m.value ?? 0,
+          maxScore: m.maxScore ?? m.max ?? 25,
+        };
+      });
+
+      if (score == null && metrics.length) {
+        // derive total as sum of (score scaled to share of maxScore out of 100)
+        const totalMax = metrics.reduce((a, m) => a + (m.maxScore || 0), 0) || 100;
+        const totalScore = metrics.reduce((a, m) => a + (m.score || 0), 0);
+        score = Math.round((totalScore / totalMax) * 100);
+      }
+
+      return { score: score ?? 0, metrics, summary, repoName };
+    }
+
+    function renderResults(data) {
+      const { score, metrics, summary, repoName } = normalizeMetrics(data);
+
+      $("repo-name").textContent = repoName ? "📂 " + repoName : "";
+
+      renderGauge(score);
+      renderBreakdown(metrics);
+
+      const sumEl = $("summary");
+      if (summary) {
+        sumEl.textContent = summary;
+        sumEl.style.display = "";
+      } else {
+        sumEl.style.display = "none";
+      }
+
+      loadingOverlay.classList.remove("visible");
+      results.classList.add("visible");
+      results.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    async function analyze(url) {
+      clearError();
+      setLoading(true, "Analyzing repository…");
+      results.classList.remove("visible");
+      // reset gauge so animation replays
+      $("gauge-progress").style.strokeDashoffset = GAUGE_CIRC;
+      $("gauge-score").textContent = "0";
+
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 60000);
+      try {
+        const res = await fetch("/api/analyze", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url }),
+          signal: controller.signal,
+        });
+
+        if (!res.ok) {
+          let detail = `Request failed (HTTP ${res.status})`;
+          try {
+            const errBody = await res.json();
+            detail = errBody.error || errBody.message || errBody.detail || detail;
+          } catch { /* ignore */ }
+          throw new Error(detail);
+        }
+
+        let data;
+        try {
+          data = await res.json();
+        } catch {
+          throw new Error("Server returned an invalid response.");
+        }
+        renderResults(data);
+      } catch (err) {
+        const name = err && err.name;
+        let msg = err && err.message ? err.message : "Something went wrong.";
+        if (name === "AbortError") msg = "The request timed out. Please try again.";
+        else if (name === "TypeError") msg = "Could not reach the server. Is it running?";
+        showError(msg);
+        setLoading(false);
+      } finally {
+        clearTimeout(timeout);
+      }
+    }
+
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const url = urlInput.value.trim();
+      if (!url) {
+        showError("Please enter a GitHub repository URL.");
+        return;
+      }
+      if (!isValidGitHubUrl(url)) {
+        showError("That doesn't look like a valid GitHub repo URL (e.g. https://github.com/owner/repo).");
+        return;
+      }
+      analyze(url);
+    });
+
+    $("again-btn").addEventListener("click", () => {
+      results.classList.remove("visible");
+      urlInput.value = "";
+      urlInput.disabled = false;
+      analyzeBtn.disabled = false;
+      clearError();
+      urlInput.focus();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+
+    // Quick-fill example links.
+    document.querySelectorAll("[data-example]").forEach((a) => {
+      a.addEventListener("click", (e) => {
+        e.preventDefault();
+        urlInput.value = a.dataset.example;
+        urlInput.focus();
+      });
+    });
+  </script>
+</body>
+</html>

@@ -5,6 +5,9 @@ const PORT = process.env.PORT ?? 3001;
 
 app.use(express.json());
 
+// Serve the static frontend (single-page UI) from /public.
+app.use(express.static("public"));
+
 /**
  * ZeroDeploy — AI-powered GitHub repo code review tool.
  *
