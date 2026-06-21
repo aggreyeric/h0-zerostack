@@ -124,6 +124,58 @@ structured `AnalysisResult` (overall score, per-category scores, findings, summa
 | Database  | AWS serverless (DynamoDB / Aurora Serverless v2)|
 | Hosting   | Vercel (frontend) + AWS (backend)               |
 
+## 🚀 Quick Start
+
+### Prerequisites
+- Node.js 18+
+- npm or yarn
+
+### Install & Run
+```bash
+git clone https://github.com/aggreyeric/h0-zerostack.git
+cd h0-zerostack
+npm install
+npm run build
+npm start
+```
+
+Server starts at http://localhost:3001
+
+### With Docker
+```bash
+docker compose up --build
+```
+
+### Try It
+No API keys needed — uses GitHub's public API:
+```bash
+# Health check
+curl http://localhost:3001/health
+
+# Analyze a repo
+curl -X POST http://localhost:3001/api/analyze \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://github.com/facebook/react"}'
+
+# Shorthand
+curl http://localhost:3001/api/analyze/microsoft/vscode
+
+# Parse a URL
+curl -X POST http://localhost:3001/api/parse \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://github.com/denoland/deno"}'
+```
+
+### Environment Variables
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| PORT | No | 3001 | Server port |
+
+### Test
+```bash
+npm test
+```
+
 ## Getting started
 
 ```bash
