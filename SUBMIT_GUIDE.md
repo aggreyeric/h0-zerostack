@@ -36,7 +36,7 @@ Key points to include (already written in that file):
   3. **Code Quality (25 pts)** — LICENSE, README, topics, `.github/` config, homepage, wiki.
   4. **Security (25 pts)** — archived flag, explicit license, up-to-date signal, deprecation status.
 - **Why it matters:** Turns vibe-based repo triage into an auditable grade. Every score is explainable. Honest too — `vercel/next.js` scores ~87 (A−), abandoned repos score low.
-- **Test results:** ✅ 35/35 tests passing (URL parsing + scoring logic fully covered).
+- **Test results:** ✅ 45/45 tests passing (URL parsing + scoring logic fully covered).
 
 ### 3. GitHub Link
 ```

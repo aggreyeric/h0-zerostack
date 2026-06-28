@@ -1,6 +1,6 @@
 # H0 Zero Stack App
 
-![TypeScript](https://img.shields.io/badge/language-TypeScript-3178C6) ![Express](https://img.shields.io/badge/framework-Express-000000) ![GitHub API](https://img.shields.io/badge/API-GitHub%20REST-181717) ![Docker](https://img.shields.io/badge/Docker-ready-2496ED) ![License](https://img.shields.io/badge/license-MIT-green) ![H0](https://img.shields.io/badge/hackathon-H0%20Zero%20Stack-$80K%20prize-orange) ![Tests](https://img.shields.io/badge/tests-35%20passed-success)
+![TypeScript](https://img.shields.io/badge/language-TypeScript-3178C6) ![Express](https://img.shields.io/badge/framework-Express-000000) ![GitHub API](https://img.shields.io/badge/API-GitHub%20REST-181717) ![Docker](https://img.shields.io/badge/Docker-ready-2496ED) ![License](https://img.shields.io/badge/license-MIT-green) ![H0](https://img.shields.io/badge/hackathon-H0%20Zero%20Stack-$80K%20prize-orange) ![Tests](https://img.shields.io/badge/tests-45%20passing-brightgreen)
 
 ## 📸 Screenshot
 
@@ -93,6 +93,16 @@ The **overall score** is the sum of all four categories, also reported as a perc
 users see exactly *why* they got the number they got.
 
 ## Architecture
+
+```mermaid
+flowchart LR
+    U([User]) -->|paste repo URL| UI["Dark UI<br/>React + Vercel v0<br/>(public/)"]
+    UI -->|"POST /api/analyze {url}"| API["Express API<br/>(src/index.ts)"]
+    API --> ENG["Analyzer Engine<br/>(src/analyzer.ts)"]
+    ENG -->|fetchRepoData| GH[("GitHub REST API")]
+    ENG -->|"score 4 dims<br/>Popularity · Activity · Quality · Security"| RES["AnalysisResult<br/>overallScore + findings[]"]
+    RES --> API --> UI
+```
 
 ```
 ┌─────────┐     ┌──────────────────┐     ┌──────────────────────┐     ┌────────────────┐     ┌──────────────┐
@@ -263,7 +273,7 @@ h0-zerostack/
 
 ## Status
 
-✅ **Code Complete** — 35 passing tests, dark-theme UI, Docker-ready, real GitHub API scoring.
+✅ **Code Complete** — 45 passing tests, dark-theme UI, Docker-ready, real GitHub API scoring.
 
 ## 🤖 AI Assistants
 

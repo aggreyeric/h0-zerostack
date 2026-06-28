@@ -56,7 +56,7 @@ No API keys, no env setup, no build tooling — just works.
 
 ## Test Results
 
-✅ **35/35 tests passing** — URL parsing + scoring logic fully covered.
+✅ **45/45 tests passing** — URL parsing + scoring logic fully covered.
 
 ## Links
 

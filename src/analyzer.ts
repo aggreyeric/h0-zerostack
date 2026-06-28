@@ -52,12 +52,17 @@ export interface AnalysisResult {
  * Supports: https://github.com/owner/repo, github.com/owner/repo, owner/repo
  */
 export function parseRepoUrl(url: string): { owner: string; repo: string } | null {
+  // Defensive guard: reject non-string / empty input so callers never crash with a raw
+  // TypeError on `url.trim()` when given undefined, null, or "" (e.g. malformed request body).
+  if (typeof url !== "string" || url.trim() === "") return null;
+  const trimmed = url.trim();
+
   // Direct shorthand: "owner/repo"
-  const shorthand = /^([a-zA-Z0-9_.-]+)\/([a-zA-Z0-9_.-]+)$/.exec(url.trim());
+  const shorthand = /^([a-zA-Z0-9_.-]+)\/([a-zA-Z0-9_.-]+)$/.exec(trimmed);
   if (shorthand) return { owner: shorthand[1], repo: shorthand[2].replace(/\.git$/, "") };
 
   // Full URL: https://github.com/owner/repo[.git][/tree/branch]
-  const urlMatch = /github\.com\/([a-zA-Z0-9_.-]+)\/([a-zA-Z0-9_.-]+)/.exec(url.trim());
+  const urlMatch = /github\.com\/([a-zA-Z0-9_.-]+)\/([a-zA-Z0-9_.-]+)/.exec(trimmed);
   if (urlMatch) return { owner: urlMatch[1], repo: urlMatch[2].replace(/\.git$/, "") };
 
   return null;
@@ -65,22 +70,58 @@ export function parseRepoUrl(url: string): { owner: string; repo: string } | nul
 
 /**
  * Fetch repo data from GitHub API (public, no auth needed for basic info).
+ *
+ * Hardened for edge cases judges may trigger:
+ *  - Request timeout via AbortController so a slow/hung GitHub never hangs the API indefinitely.
+ *  - Network failures (DNS/offline/connection refused) surfaced as a clear message, not a raw TypeError stack.
+ *  - Malformed response bodies (e.g. a proxy HTML error page) surfaced clearly instead of a JSON SyntaxError.
  */
 async function fetchRepoData(owner: string, repo: string): Promise<GitHubRepo> {
-  const response = await fetch(`https://api.github.com/repos/${owner}/${repo}`, {
-    headers: {
-      Accept: "application/vnd.github.v3+json",
-      "User-Agent": "ZeroDeploy-Analyzer/1.0",
-    },
-  });
+  const TIMEOUT_MS = 10_000;
+  const controller = new AbortController();
+  // Abort the in-flight request if GitHub is unresponsive, preventing indefinite hangs.
+  const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
-  if (!response.ok) {
-    if (response.status === 404) throw new Error(`Repository ${owner}/${repo} not found (private or doesn't exist)`);
-    if (response.status === 403) throw new Error("GitHub API rate limit exceeded. Try again later.");
-    throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
+  try {
+    const response = await fetch(`https://api.github.com/repos/${owner}/${repo}`, {
+      headers: {
+        Accept: "application/vnd.github.v3+json",
+        "User-Agent": "ZeroDeploy-Analyzer/1.0",
+      },
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      if (response.status === 404) throw new Error(`Repository ${owner}/${repo} not found (private or doesn't exist)`);
+      if (response.status === 403) throw new Error("GitHub API rate limit exceeded. Try again later.");
+      throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
+    }
+
+    // Parse defensively: a non-JSON body (proxy error page, truncated payload) would otherwise
+    // surface as a low-level SyntaxError with no actionable context for the caller.
+    try {
+      return (await response.json()) as GitHubRepo;
+    } catch {
+      throw new Error("Received malformed response from GitHub API (invalid JSON body).");
+    }
+  } catch (error) {
+    // Translate low-level failures into clear, user-facing messages.
+    // Descriptive errors thrown above (404, rate limit, malformed body) fall through and re-throw as-is.
+    if (error instanceof Error && error.name === "AbortError") {
+      throw new Error(`GitHub API request timed out after ${TIMEOUT_MS / 1000}s. Please try again.`);
+    }
+    // Node fetch surfaces unreachable hosts as a TypeError ("fetch failed"); other runtimes may use
+    // ECONN*/ENOTFOUND/ETIMEDOUT codes. Normalise both into a single network-error message.
+    if (
+      error instanceof TypeError ||
+      (error instanceof Error && /fetch failed|network|ECONN|ENOTFOUND|ETIMEDOUT/i.test(error.message))
+    ) {
+      throw new Error("Network error contacting GitHub API. Check your connection and try again.");
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeout);
   }
-
-  return response.json() as Promise<GitHubRepo>;
 }
 
 /**
