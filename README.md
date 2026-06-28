@@ -1,4 +1,4 @@
-# H0 Zero Stack App
+# 🚀 ZeroDeploy — AI-Powered GitHub Repo Quality Scorer
 
 ![TypeScript](https://img.shields.io/badge/language-TypeScript-3178C6) ![Express](https://img.shields.io/badge/framework-Express-000000) ![GitHub API](https://img.shields.io/badge/API-GitHub%20REST-181717) ![Docker](https://img.shields.io/badge/Docker-ready-2496ED) ![License](https://img.shields.io/badge/license-MIT-green) ![H0](https://img.shields.io/badge/hackathon-H0%20Zero%20Stack-$80K%20prize-orange) ![Tests](https://img.shields.io/badge/tests-45%20passing-brightgreen)
 
